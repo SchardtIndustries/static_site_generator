@@ -1,10 +1,15 @@
-from textnode import TextType, TextNode
 from recursive_copy import copy_dir_clean
 from generate_recursive import generate_pages_recursive
+import sys
 
 def main():
+    if len(sys.argv) > 1:
+        basepath = sys.argv[1]
+    else:
+        basepath = '/'
+
     copy_dir_clean("static", "public")
-    generate_pages_recursive("content", "template.html", "public")
+    generate_pages_recursive("content", "template.html", "public", basepath)
 
 if __name__ == "__main__":
     main()
