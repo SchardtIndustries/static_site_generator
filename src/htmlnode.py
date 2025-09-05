@@ -36,6 +36,9 @@ class LeafNode(HTMLNode):
         if self.tag is None:
             return self.value
         attrs = self.props_to_html()
+        voids = {'img', 'br', 'hr', 'meta', 'link', 'input'}
+        if self.tag in voids:
+            return f"<{self.tag}{attrs}>"
         return f"<{self.tag}{attrs}>{self.value}</{self.tag}>"
 
 class ParentNode(HTMLNode):

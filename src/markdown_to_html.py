@@ -2,6 +2,7 @@ import re
 from htmlnode import HTMLNode, LeafNode, ParentNode
 from markdown2 import markdown
 
+
 def parse_attributes(attr_string):
     attrs = {}
     attr_re = re.compile(r'(\w+)\s*=\s*"([^"]*)"')
@@ -17,6 +18,7 @@ def parse_html_to_nodes(html):
 
     tag_re = re.compile(r'<(/?)(\w+)(.*?)?>')
     void_elements = {'img', 'input', 'br', 'hr', 'meta', 'link'}
+    tag_map = {'em': 'i', 'strong': 'b'}
 
     pos = 0
     while pos < len(html):
@@ -28,37 +30,50 @@ def parse_html_to_nodes(html):
         is_closing = match.group(1) == '/'
         tag_name = match.group(2).lower()
         attr_string = match.group(3).strip()
+        mapped = tag_map.get(tag_name, tag_name)
 
         # Handle text between tags
+        # Handle text between tags
         if tag_start > pos:
-            text_content = html[pos:tag_start].strip()
+            text_content = html[pos:tag_start]
             if text_content:
+                # if we're directly inside a blockquote and this is its first child,
+                # trim leading whitespace so it follows the <blockquote> immediately
+                if current_node.tag == 'blockquote' and not current_node.children:
+                    text_content = text_content.lstrip()
                 current_node.children.append(LeafNode(None, text_content))
 
         # Update position
         pos = tag_end
 
         if is_closing:
-            # Pop from stack on closing tag
-            if stack and stack[-1].tag == tag_name:
-                stack.pop()
-                if stack:
-                    current_node = stack[-1]
-                else:
-                    current_node = root
-        elif tag_name in void_elements:
-            # Self-closing tags (void elements)
-            current_node.children.append(LeafNode(tag_name, '', parse_attributes(attr_string)))
+            if stack and stack[-1].tag == mapped:
+                node = stack.pop()
+                # unwrap <p> inside blockquote
+                if getattr(node, "_unwrap_into", None) is not None and mapped == 'p':
+                    node._unwrap_into.children.extend(node.children)
+        # set current_node after popping
+                current_node = stack[-1] if stack else root
         else:
-            # Opening tag, create a new ParentNode
-            new_node = ParentNode(tag_name, [], parse_attributes(attr_string))
-            current_node.children.append(new_node)
-            current_node = new_node
-            stack.append(new_node)
+            if mapped in void_elements:
+                current_node.children.append(LeafNode(mapped, '', parse_attributes(attr_string)))
+            else:
+                # unwrap <p> if parent is blockquote
+                unwrap_p = (mapped == 'p' and current_node.tag == 'blockquote')
+                if unwrap_p:
+                    placeholder = ParentNode('p', [])
+                    placeholder._unwrap_into = current_node
+                    stack.append(placeholder)
+                    current_node = placeholder
+                else:
+                    new_node = ParentNode(mapped, [], parse_attributes(attr_string))
+                    current_node.children.append(new_node)
+                    current_node = new_node
+                    stack.append(new_node)
 
     # Handle any trailing text
     if pos < len(html):
-        trailing_text = html[pos:].strip()
+        trailing_text = html[pos:]
         if trailing_text:
             current_node.children.append(LeafNode(None, trailing_text))
 
