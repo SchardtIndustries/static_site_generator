@@ -19,8 +19,12 @@ class HTMLNode:
         return attrs
 
     def __repr__(self):
-        return (f"HTMLNode(tag={self.tag!r}, value={self.value!r}, "
-                f"children={self.children!r}, props={self.props!r})")
+        return (f"HTMLNode("
+                f"tag={self.tag!r}, "
+                f"value={getattr(self, 'value', None)!r}, "
+                f"children={self.children!r}, "
+                f"props={self.props!r})")
+
     
 class LeafNode(HTMLNode):
     def __init__(self, tag, value, props=None):
