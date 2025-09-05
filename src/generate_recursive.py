@@ -1,7 +1,7 @@
 import os
 from generate_page import generate_page
 
-def generate_pages_recursive(dir_path_content, template_path, dest_dir_path):
+def generate_pages_recursive(dir_path_content, template_path, dest_dir_path, basepath):
     print(f"Starting recursive page generation from '{dir_path_content}' to '{dest_dir_path}' using template '{template_path}'")
     
     for root, dirs, files in os.walk(dir_path_content):
@@ -20,7 +20,7 @@ def generate_pages_recursive(dir_path_content, template_path, dest_dir_path):
                 dest_html_path = os.path.join(target_dir, dest_html_filename)
 
                 # Generate page
-                generate_page(source_md_path, template_path, dest_html_path)
+                generate_page(source_md_path, template_path, dest_html_path, basepath)
 
 # Example usage:
 # generate_pages_recursive('static', 'template.html', 'public')
