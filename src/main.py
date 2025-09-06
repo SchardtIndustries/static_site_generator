@@ -8,8 +8,8 @@ def main():
     else:
         basepath = '/'
 
-    copy_dir_clean("static", "public")
-    generate_pages_recursive("content", "template.html", "public", basepath)
+    copy_dir_clean("static", "docs")
+    generate_pages_recursive("content", "template.html", "docs", basepath)
 
 if __name__ == "__main__":
     main()
